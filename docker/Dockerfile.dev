@@ -1,0 +1,23 @@
+FROM python:3.12.4-slim AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && \
+    apt-get install -y \
+    nodejs \
+    npm && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN npm install -g nodemon
+
+FROM base AS final
+
+WORKDIR /app
+
+COPY ./ /app
+
+CMD ["nodemon", "--watch", "*", "--ext", "py", "--exec", "python3", "-u", "main.py"]

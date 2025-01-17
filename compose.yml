@@ -1,0 +1,36 @@
+services:
+  selenium-hub:
+    image: selenium/hub:3.141.59-20210929
+    ports:
+      - "4448:4444"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4444/wd/hub/status"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  chrome:
+    image: selenium/node-chrome:3.141.59-20210929
+    volumes:
+      - /dev/shm:/dev/shm
+    depends_on:
+      - selenium-hub
+    environment:
+      - HUB_HOST=selenium-hub
+      - HUB_PORT=4444
+      - NODE_MAX_INSTANCES=3
+      - NODE_MAX_SESSION=3
+
+  parser:
+    build:
+      context: .
+      dockerfile: ${DOCKERFILE}
+    volumes:
+      - .:/app
+      - ./temp:/app/temp
+    env_file:
+      - .env
+    depends_on:
+      selenium-hub:
+        condition: service_healthy
